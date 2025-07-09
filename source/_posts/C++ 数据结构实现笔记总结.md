@@ -1,0 +1,53 @@
+### C++ 数据结构实现笔记总结
+
+#### 一、单链表相关
+
+1. **节点结构（`ListNode`）**
+   - 成员：`int val`（存储值）、`ListNode* next`（指向下一节点）
+   - 构造函数：`ListNode(int x) : val(x), next(nullptr)`（初始化值和指针）
+2. **链表创建（`createLinkedList`）**
+   - 功能：将数组转换为单链表
+   - 逻辑：先创建头节点，再循环添加后续节点，通过`cur`指针移动构建链表
+3. **链表类（`MyLinkedList`）核心设计**
+   - 采用**虚拟头节点**（`dummy head`）：简化头节点插入 / 删除的边界处理，统一操作逻辑
+   - 成员：`size`（记录长度）、`head`（虚拟头节点指针）
+   - 核心方法：
+     - `get(index)`：检查索引合法性，遍历到目标节点返回值
+     - `addAtIndex(index, val)`：支持负数索引（调整为 0），通过前驱节点插入新节点
+     - `deleteAtIndex(index)`：找到前驱节点，调整指针并释放内存
+
+#### 二、智能指针与内存管理
+
+1. **`std::unique_ptr<T[]>`**
+   - 用于管理动态数组，独占所有权，自动释放内存（避免泄漏）
+   - 创建方式：`std::make_unique<T[]>(size)`（C++14+）
+   - 特性：禁止拷贝，支持移动语义（`std::move`转移所有权）
+2. **`explicit`构造函数**
+   - 作用：禁止单参数构造函数的隐式类型转换（如`CycleArray arr = 10`）
+   - 用法：`explicit CycleArray(int size)`，仅允许显式构造（`CycleArray arr(10)`）
+   - 优点：避免因隐式类型转换导致的潜在运行时错误
+
+#### 三、循环数组（`CycleArray`）
+
+1. **核心结构**
+   - 成员：`unique_ptr<T[]> arr`（动态数组）、`start`（头索引，闭区间）、`end`（尾索引，开区间）、`count`（元素数）、`size`（容量）
+   - 循环逻辑：通过模运算（`% size`）实现索引循环
+2. **关键操作**
+   - **插入**：`addFirst`（头插，`start`左移）、`addLast`（尾插，`end`右移），满容量时扩容（`size*2`）
+   - **删除**：`removeFirst`（头删，`start`右移）、`removeLast`（尾删，`end`左移），元素数≤`size/4`时缩容（`size/2`）
+   - **自动扩缩容**：平衡空间利用率（25%-100%），均摊时间复杂度 O (1)
+3. **构造函数设计**
+   - 默认构造：`CycleArray() : CycleArray(1)`（委托给带参构造，初始容量 1）
+   - 带参构造：`explicit CycleArray(int size)`，初始化指针和数组
+
+#### 四、关键概念辨析
+
+1. **虚拟头节点**
+   - 作用：统一头节点与其他节点的操作逻辑，避免空链表判断
+   - 区别：不存储实际数据，仅作为操作起点
+2. **隐式转换**
+   - 风险：单参数构造函数可能被隐式调用（如`void func(CycleArray arr)`接收`10`）
+   - 避免：用`explicit`修饰构造函数
+3. **移动语义**
+   - 适用场景：`unique_ptr`所有权转移（`arr = std::move(newArr)`）
+   - 优势：避免深拷贝，提高性能
